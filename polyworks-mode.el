@@ -49,8 +49,4 @@
   '(".pwmacro\\'" )
   nil)
 
-
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.nps" . nps-mode))
 ;;; polyworks-mode.el ends here
