@@ -3,90 +3,53 @@
 ;;; Commentary:
 ;;;  By Joseph T. Foley <foley@ru.is>
 ;;;  A Major mode for working with Innovmetric PolyWorks 2023+ macros
-;;;  Based upon https://www.omarpolo.com/post/writing-a-major-mode.html
+;;;  Based upon generic-x.el examples
+;;; Emacs documentation says:
+
+;; Generic modes are simple major modes with basic support for comment
+;; syntax and Font Lock mode. To define a generic mode, use the macro
+;; define-generic-mode. See the file generic-x.el for some examples of
+;; the use of define-generic-mode.
+
+;; macro define-generic-mode mode comment-list keyword-list
+;; font-lock-list auto-mode-list function-list \&optional docstring
+;; This macro defines a generic mode command named mode (a symbol, not
+;; quoted). The optional argument docstring is the documentation for
+;; the mode command. If you do not supply it, define-generic-mode
+;; generates one by default.
+
+;; The argument comment-list is a list in which each element is either
+;; a character, a string of one or two characters, or a cons cell. A
+;; character or a string is set up in the mode’s syntax table as a
+;; comment starter. If the entry is a cons cell, the CAR is set up as
+;; a comment starter and the CDR as a comment ender. (Use nil for the
+;; latter if you want comments to end at the end of the line.) Note
+;; that the syntax table mechanism has limitations about what comment
+;; starters and enders are actually possible. See Syntax Tables.
+
+;; The argument keyword-list is a list of keywords to highlight with
+;; font-lock-keyword-face. Each keyword should be a string. Meanwhile,
+;; font-lock-list is a list of additional expressions to highlight.
+;; Each element of this list should have the same form as an element
+;; of font-lock-keywords. See Search-based Fontification.
+
+;; The argument auto-mode-list is a list of regular expressions to add
+;; to the variable auto-mode-alist. They are added by the execution of
+;; the define-generic-mode form, not by expanding the macro call.
+
+;; Finally, function-list is a list of functions for the mode command to call for additional setup. It calls these functions just before it runs the mode hook variable mode-hook.
+
 (provide 'polyworks-mode)
 ;;; Code:
-(eval-when-compile
-  (require 'rx))
+
+(define-generic-mode 'polyworks-mode
+  '("#")
+  '("DECLARE" "MACRO")
+  nil
+  '(".pwmacro\\'" )
+  nil)
 
 
-(defconst polyworks--font-lock-defaults
-  (let ((keywords '("assert" "const" "include" "proc" "testing"))
-        (types '("str" "u8" "u16" "u32")))
-    `(((,(rx-to-string `(: (or ,@keywords))) 0 font-lock-keyword-face)
-       ("\\([[:word:]]+\\)\s*(" 1 font-lock-function-name-face)
-       (,(rx-to-string `(: (or ,@types))) 0 font-lock-type-face)))))
-
-
-
-(defvar polyworks-mode-syntax-table
-  (let ((st (make-syntax-table)))
-    (modify-syntax-entry ?\{ "(}" st)
-    (modify-syntax-entry ?\} "){" st)
-    (modify-syntax-entry ?\( "()" st)
-
-    ;; ;; - and _ are word constituents
-    ;; (modify-syntax-entry ?_ "w" st)
-    ;; (modify-syntax-entry ?- "w" st)
-
-    ;; ;; both single and double quotes makes strings
-    ;; (modify-syntax-entry ?\" "\"" st)
-    ;; (modify-syntax-entry ?' "'" st)
-
-    ;; ;; add comments. lua-mode does something similar, so it shouldn't
-    ;; ;; bee *too* wrong.
-    ;; (modify-syntax-entry ?# "<" st)
-    ;; (modify-syntax-entry ?\n ">" st)
-
-    ;; '==' as punctuation
-    (modify-syntax-entry ?= ".")
-    st))
-
-
-(defun polyworks-indent-line ()
-  "Indent current line."
-  (let (indent
-        boi-p                           ;begin of indent
-        move-eol-p
-        (point (point)))                ;lisps-2 are truly wonderful
-    (save-excursion
-      (back-to-indentation)
-      (setq indent (car (syntax-ppss))
-            boi-p (= point (point)))
-      ;; don't indent empty lines if they don't have the in it
-      (when (and (eq (char-after) ?\n)
-                 (not boi-p))
-        (setq indent 0))
-      ;; check whether we want to move to the end of line
-      (when boi-p
-        (setq move-eol-p t))
-      ;; decrement the indent if the first character on the line is a
-      ;; closer.
-      (when (or (eq (char-after) ?\))
-                (eq (char-after) ?\}))
-        (setq indent (1- indent)))
-      ;; indent the line
-      (delete-region (line-beginning-position)
-                     (point))
-      (indent-to (* tab-width indent)))
-    (when move-eol-p
-      (move-end-of-line nil))))
-
-(defvar polyworks-mode-abbrev-table nil
-  "Abbreviation table used in `nps-mode' buffers.")
-
-(define-abbrev-table 'nps-mode-abbrev-table
-  '())
-
-;;;###autoload
-(define-derived-mode nps-mode prog-mode "polyworks"
-  "Major mode for nps files."
-  :abbrev-table polyworks-mode-abbrev-table
-  (setq font-lock-defaults polyworks-font-lock-defaults)
-  (setq-local comment-start "#")
-  (setq-local comment-start-skip "#+[\t ]*")
-  (setq-local indent-line-function #'polyworks-indent-line)
-  (setq-local indent-tabs-mode t))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.nps" . nps-mode))
