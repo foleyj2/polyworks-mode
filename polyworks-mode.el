@@ -4,6 +4,13 @@
 ;;;  By Joseph T. Foley <foley@ru.is>
 ;;;  A Major mode for working with Innovmetric PolyWorks 2023+ macros
 ;;;  Based upon generic-x.el examples
+;;; Reference
+;;;  https://www.gnu.org/software/emacs/manual/html_node/elisp/Generic-Modes.htm
+;;;  https://www.emacswiki.org/emacs/GenericMode
+;;;  https://www.emacswiki.org/emacs/ModeTutorial
+;;;  https://stackoverflow.com/questions/1063115/a-hello-world-example-for-a-major-mode-in-emacs
+;;; 
+
 ;;; Emacs documentation says:
 
 ;; Generic modes are simple major modes with basic support for comment
@@ -44,9 +51,10 @@
 
 (define-generic-mode 'polyworks-mode
   '("#")
-  '("DECLARE" "MACRO")
+  '("DECLARE" "MACRO" "IF" "ENDIF" "WHILE" "ENDWHILE")
+  '(("[$][a-zA-Z0-9_]+" 1 font-lock-variable-name-face))
+  '(".pwmacro\\'")
   nil
-  '(".pwmacro\\'" )
-  nil)
+  "Major Mode for PolyWorks Scripting macros")
 
 ;;; polyworks-mode.el ends here
